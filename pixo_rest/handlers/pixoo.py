@@ -72,7 +72,7 @@ def turn(
     return Status(status='ok')
 
 
-@router.post('/turn/{toggle}', tags=['main'], response_model=Status)
+@router.post('/screen/turn/{toggle}', tags=['main'], response_model=Status)
 def turn(
     toggle: str,
     pixoo_client: Pixoo = Depends(get_pixoo_client),
