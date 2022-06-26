@@ -8,16 +8,24 @@ from ._colors import Palette
 from ._font import retrieve_glyph
 from utils.config import get_config
 from pixo_rest.models.pixoo_models import PixooSettings
+from urllib3.exceptions import ConnectionError, NewConnectionError
+import logging
 
 
 _obj = None
 _config = get_config()
+logger = logging.getLogger(__name__)
 
 
-def pixoo_client() -> 'Pixoo':
+def get_pixoo_client() -> 'Pixoo':
     global _obj
     if not _obj:
-        _obj = Pixoo(address=_config.pixoo.ip)
+        try:
+            _obj = Pixoo(address=_config.pixoo.ip)
+        except (ConnectionError, NewConnectionError):
+            logger.error('Could not connect to Pixoo')
+            return
+
     return _obj
 
 

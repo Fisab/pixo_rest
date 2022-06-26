@@ -1,4 +1,12 @@
 from pydantic import BaseModel
+from enum import Enum
+
+
+class ChannelId(str, Enum):
+    face = 0  # часы
+    cloud = 1  # подборка
+    audio_visualizer = 2  # аудио-визуализатор (через микрофон)
+    custom = 3  # сохраненки
 
 
 class BasePixooModel(BaseModel):
