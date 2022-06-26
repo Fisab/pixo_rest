@@ -8,7 +8,9 @@ COPY pixo_rest ./pixo_rest
 COPY utils ./utils
 
 RUN python3 -m pip install --upgrade pip
-RUN easy_install pillow
+RUN sudo apt-get install libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev \
+    libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python3-tk \
+    libharfbuzz-dev libfribidi-dev libxcb1-dev
 RUN python3 -m pip install -r requirements.txt
 
 
