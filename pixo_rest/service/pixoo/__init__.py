@@ -337,6 +337,15 @@ class Pixoo:
         if data['error_code'] != 0:
             self.__error(data)
 
+    def turn_screen(self, on: bool = True):
+        response = requests.post(
+            self.__url,
+            json.dumps({'Command': 'Channel/OnOffScreen', 'OnOff': int(on)}),
+        )
+        data = response.json()
+        if data['error_code'] != 0:
+            self.__error(data)
+
     def set_brightness(self, brightness):
         brightness = clamp(brightness, 0, 100)
         response = requests.post(

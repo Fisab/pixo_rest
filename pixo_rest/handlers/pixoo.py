@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, status
 from ..models.pixoo_models import ChannelId
 from ..models.request_models import TimerModel
 from ..models.internal import Status
-from pixo_rest.service.pixoo import Pixoo, get_pixoo_client
+from pixo_rest.service.pixoo import Pixoo, get_pixoo_client, PixooSettings
 from utils.config import get_config
 from typing import Optional
 
@@ -56,3 +56,39 @@ def set_channel(
 ):
     pixoo_client.set_channel(channel=channel_id)
     return Status(status='ok')
+
+
+@router.post('/turn/{toggle}', tags=['main'], response_model=Status)
+def turn(
+    toggle: str,
+    pixoo_client: Pixoo = Depends(get_pixoo_client),
+    dependencies=Depends(verify_token),
+):
+    if toggle not in ['on', 'off']:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail='toggle must be on or off'
+        )
+    pixoo_client.turn_screen(on=toggle == 'on')
+    return Status(status='ok')
+
+
+@router.post('/turn/{toggle}', tags=['main'], response_model=Status)
+def turn(
+    toggle: str,
+    pixoo_client: Pixoo = Depends(get_pixoo_client),
+    dependencies=Depends(verify_token),
+):
+    if toggle not in ['on', 'off']:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail='toggle must be on or off'
+        )
+    pixoo_client.turn_screen(on=toggle == 'on')
+    return Status(status='ok')
+
+
+@router.get('/settings', tags=['main'], response_model=PixooSettings)
+def turn(
+    pixoo_client: Pixoo = Depends(get_pixoo_client),
+    dependencies=Depends(verify_token),
+):
+    return pixoo_client.get_settings()
