@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "pixo_rest"
+version = "0.1.0"
+description = ""
+authors = ["Fisab <vladsudakov5@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+requests = "^2.28.0"
+Pillow = "^9.1.1"
+python-dotenv = "^0.20.0"
+fastapi = "^0.78.0"
+PyYAML = "^6.0"
+uvicorn = "^0.18.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+black = "^22.3.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
