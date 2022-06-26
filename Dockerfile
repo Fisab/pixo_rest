@@ -7,7 +7,7 @@ COPY requirements.txt ./
 COPY pixo_rest ./pixo_rest
 COPY utils ./utils
 
-RUN sudo apk add libjpeg-dev
+RUN apk add libjpeg-dev
 RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install -r requirements.txt
 
