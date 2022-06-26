@@ -1,4 +1,4 @@
-FROM arm32v7/python:3.9-slim
+FROM arm32v7/python:3.9
 
 WORKDIR /app
 
@@ -7,8 +7,8 @@ COPY requirements.txt ./
 COPY pixo_rest ./pixo_rest
 COPY utils ./utils
 
-RUN python3 -m pip install --upgrade pip
 RUN sudo apt-get install -y libjpeg-dev
+RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install -r requirements.txt
 
 
