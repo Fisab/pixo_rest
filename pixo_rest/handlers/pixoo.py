@@ -58,20 +58,6 @@ def set_channel(
     return Status(status='ok')
 
 
-@router.post('/turn/{toggle}', tags=['main'], response_model=Status)
-def turn(
-    toggle: str,
-    pixoo_client: Pixoo = Depends(get_pixoo_client),
-    dependencies=Depends(verify_token),
-):
-    if toggle not in ['on', 'off']:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail='toggle must be on or off'
-        )
-    pixoo_client.turn_screen(on=toggle == 'on')
-    return Status(status='ok')
-
-
 @router.post('/screen/turn/{toggle}', tags=['main'], response_model=Status)
 def turn(
     toggle: str,
