@@ -1,7 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
 from pixo_rest.handlers import health
 from pixo_rest.handlers import pixoo
 from utils.config import get_config
+from pixo_rest.service.exceptions import PixooConnectionError
 
 
 def init_app() -> FastAPI:
@@ -15,6 +17,15 @@ def init_app() -> FastAPI:
 
     app.include_router(health.router)
     app.include_router(pixoo.router)
+
+    @app.exception_handler(PixooConnectionError)
+    async def unicorn_exception_handler(request: Request, exc: PixooConnectionError):
+        return JSONResponse(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            content={
+                'detail': 'Pixoo connection timeout',
+            },
+        )
 
     return app
 

@@ -8,6 +8,7 @@ from ._colors import Palette
 from ._font import retrieve_glyph
 from utils.config import get_config
 from pixo_rest.models.pixoo_models import PixooSettings
+from pixo_rest.service.exceptions import PixooConnectionError
 from urllib3.exceptions import ConnectionError, NewConnectionError
 import logging
 
@@ -84,13 +85,14 @@ class Pixoo:
     __buffers_send = 0
     __counter = 0
 
-    def __init__(self, address, size=64, debug=False):
+    def __init__(self, address, size=64, debug=False, timeout=5):
         assert size in [
             16,
             32,
             64,
         ], 'Invalid screen size in pixels given. Valid options are 16, 32, and 64'
 
+        self.timeout = timeout
         self.address = address
         self.debug = debug
         self.size = size
@@ -113,34 +115,39 @@ class Pixoo:
     def clear_rgb(self, r, g, b):
         self.fill_rgb(r, g, b)
 
+    def _query(self, body):
+        try:
+            response = requests.post(
+                self.__url,
+                json.dumps(body),
+                timeout=self.timeout,
+            )
+        except requests.exceptions.ConnectionError:
+            raise PixooConnectionError('Could not connect to Pixoo')
+        return response.json()
+
     def get_settings(self) -> PixooSettings:
-        response = requests.post(
-            self.__url,
-            json.dumps(
-                {
-                    'Command': 'Channel/GetAllConf',
-                }
-            ),
+        data = self._query(
+            {
+                'Command': 'Settings/GetAllConf',
+            }
         )
-        return PixooSettings(**response.json())
+        return PixooSettings(**data)
 
     def get_current_clock_id(self) -> int:
         settings = self.get_settings()
         return settings.CurClockId
 
     def set_timer(self, minute: int, second: int, status: int = 1):
-        response = requests.post(
-            self.__url,
-            json.dumps(
-                {
-                    'Command': 'Tools/SetTimer',
-                    'Minute': minute,
-                    'Second': second,
-                    'Status': status,
-                }
-            ),
+        data = self._query(
+            {
+                'Command': 'Tools/SetTimer',
+                'Minute': minute,
+                'Second': second,
+                'Status': status,
+            }
         )
-        return response.json()
+        return data
 
     def draw_character(self, character, xy=(0, 0), rgb=Palette.WHITE):
         matrix = retrieve_glyph(character)
@@ -314,63 +321,44 @@ class Pixoo:
 
         # Make sure the identifier is valid
         identifier = clamp(identifier, 0, 19)
-
-        response = requests.post(
-            self.__url,
-            json.dumps(
-                {
-                    'Command': 'Draw/SendHttpText',
-                    'TextId': identifier,
-                    'x': xy[0],
-                    'y': xy[1],
-                    'dir': direction,
-                    'font': font,
-                    'TextWidth': width,
-                    'speed': movement_speed,
-                    'TextString': text,
-                    'color': rgb_to_hex_color(color),
-                }
-            ),
+        data = self._query(
+            {
+                'Command': 'Draw/SendHttpText',
+                'TextId': identifier,
+                'x': xy[0],
+                'y': xy[1],
+                'dir': direction,
+                'font': font,
+                'TextWidth': width,
+                'speed': movement_speed,
+                'TextString': text,
+                'color': rgb_to_hex_color(color),
+            }
         )
 
-        data = response.json()
         if data['error_code'] != 0:
             self.__error(data)
 
     def turn_screen(self, on: bool = True):
-        response = requests.post(
-            self.__url,
-            json.dumps({'Command': 'Channel/OnOffScreen', 'OnOff': int(on)}),
-        )
-        data = response.json()
+        data = self._query({'Command': 'Channel/OnOffScreen', 'OnOff': int(on)})
         if data['error_code'] != 0:
             self.__error(data)
 
     def set_brightness(self, brightness):
         brightness = clamp(brightness, 0, 100)
-        response = requests.post(
-            self.__url,
-            json.dumps({'Command': 'Channel/SetBrightness', 'Brightness': brightness}),
+        data = self._query(
+            {'Command': 'Channel/SetBrightness', 'Brightness': brightness}
         )
-        data = response.json()
         if data['error_code'] != 0:
             self.__error(data)
 
     def set_channel(self, channel):
-        response = requests.post(
-            self.__url,
-            json.dumps({'Command': 'Channel/SetIndex', 'SelectIndex': int(channel)}),
-        )
-        data = response.json()
+        data = self._query({'Command': 'Channel/SetIndex', 'SelectIndex': int(channel)})
         if data['error_code'] != 0:
             self.__error(data)
 
     def set_clock(self, clock_id):
-        response = requests.post(
-            self.__url,
-            json.dumps({'Command': 'Channel/SetClockSelectId', 'ClockId': clock_id}),
-        )
-        data = response.json()
+        data = self._query({'Command': 'Channel/SetClockSelectId', 'ClockId': clock_id})
         if data['error_code'] != 0:
             self.__error(data)
 
@@ -378,13 +366,9 @@ class Pixoo:
         self.set_clock(face_id)
 
     def set_visualizer(self, equalizer_position):
-        response = requests.post(
-            self.__url,
-            json.dumps(
-                {'Command': 'Channel/SetEqPosition', 'EqPosition': equalizer_position}
-            ),
+        data = self._query(
+            {'Command': 'Channel/SetEqPosition', 'EqPosition': equalizer_position}
         )
-        data = response.json()
         if data['error_code'] != 0:
             self.__error(data)
 
@@ -397,8 +381,7 @@ class Pixoo:
             print(error)
 
     def __load_counter(self):
-        response = requests.post(self.__url, '{"Command": "Draw/GetHttpGifId"}')
-        data = response.json()
+        data = self._query({'Command': 'Draw/GetHttpGifId'})
         if data['error_code'] != 0:
             self.__error(data)
         else:
@@ -416,21 +399,17 @@ class Pixoo:
         if self.debug:
             print(f'[.] Counter set to {self.__counter}')
 
-        response = requests.post(
-            self.__url,
-            json.dumps(
-                {
-                    'Command': 'Draw/SendHttpGif',
-                    'PicNum': 1,
-                    'PicWidth': self.size,
-                    'PicOffset': 0,
-                    'PicID': self.__counter,
-                    'PicSpeed': 1000,
-                    'PicData': str(base64_bytes.decode()),
-                }
-            ),
+        data = self._query(
+            {
+                'Command': 'Draw/SendHttpGif',
+                'PicNum': 1,
+                'PicWidth': self.size,
+                'PicOffset': 0,
+                'PicID': self.__counter,
+                'PicSpeed': 1000,
+                'PicData': str(base64_bytes.decode()),
+            }
         )
-        data = response.json()
         if data['error_code'] != 0:
             self.__error(data)
         else:

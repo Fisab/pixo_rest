@@ -1,5 +1,10 @@
 from pydantic import BaseModel
 from enum import Enum
+from fastapi import Query
+
+
+valid_point = Query(gte=0, lte=64)
+valid_point_default = Query(default=0, gte=0, lte=64)
 
 
 class ChannelId(str, Enum):
