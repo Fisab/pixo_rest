@@ -3,8 +3,8 @@ from enum import Enum
 from fastapi import Query
 
 
-valid_point = Query(gte=0, lte=64)
-valid_point_default = Query(default=0, gte=0, lte=64)
+valid_point = Query(ge=0, le=64)
+valid_point_default = Query(default=0, ge=0, le=64)
 
 
 class ChannelId(str, Enum):
